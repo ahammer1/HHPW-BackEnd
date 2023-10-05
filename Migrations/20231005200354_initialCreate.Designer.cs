@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HHPW_BackEnd.Migrations
 {
     [DbContext(typeof(HHPWDbContext))]
-    [Migration("20231005000801_updatedUID")]
-    partial class updatedUID
+    [Migration("20231005200354_initialCreate")]
+    partial class initialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -91,8 +91,11 @@ namespace HHPW_BackEnd.Migrations
 
             modelBuilder.Entity("HHPW_BackEnd.Models.PaymentType", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -127,6 +130,21 @@ namespace HHPW_BackEnd.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("OrderStatusOrders", b =>
+                {
+                    b.Property<int>("OrdersId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("OrdersId", "StatusId");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("OrderStatusOrders");
+                });
+
             modelBuilder.Entity("OrdersProduct", b =>
                 {
                     b.Property<int>("OrdersId")
@@ -140,6 +158,21 @@ namespace HHPW_BackEnd.Migrations
                     b.HasIndex("ProductsId");
 
                     b.ToTable("OrdersProduct");
+                });
+
+            modelBuilder.Entity("OrderStatusOrders", b =>
+                {
+                    b.HasOne("HHPW_BackEnd.Models.Orders", null)
+                        .WithMany()
+                        .HasForeignKey("OrdersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HHPW_BackEnd.Models.OrderStatus", null)
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OrdersProduct", b =>

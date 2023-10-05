@@ -286,6 +286,34 @@ app.MapPost("/api/ProductOrders", (int ProductId, int OrderId, HHPWDbContext db)
     return Results.NoContent();
 });
 
+// Get all Payments
+app.MapGet("/payments", (HHPWDbContext db) =>
+{
+    return db.PaymentType.ToList();
+});
+
+// Adding a Payment
+app.MapPost("/payments", (HHPWDbContext db, PaymentType newPaymentType) =>
+{
+    db.PaymentType.Add(newPaymentType);
+    db.SaveChanges();
+    return Results.Created($"/paymenttype/{newPaymentType.Id}", newPaymentType);
+});
+
+// Deleting a Payment
+app.MapDelete("/payments/{id}", (HHPWDbContext db, int id) =>
+{
+    var payment = db.PaymentType.Find(id);
+    if (payment == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    db.PaymentType.Remove(payment);
+    db.SaveChanges();
+
+    return Results.NoContent();
+});
 
 
 
