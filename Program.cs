@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using HHPW_BackEnd;
+using HHPW_BackEnd.Models;
 using Microsoft.AspNetCore.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -84,7 +85,7 @@ app.MapDelete("/employees/{id}", (HHPWDbContext db, int id) =>
     db.SaveChanges();
     return Results.Ok();
 });
-//Update an Employee
+
 app.MapPut("/employees/{id}", (HHPWDbContext db, int id, Employee updatedEmployee) =>
 {
     var employee = db.Employee.Find(id);
