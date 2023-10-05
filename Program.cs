@@ -12,7 +12,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy.WithOrigins("http://localhost:3000",
-                                "http://localhost:7042")
+                                "http://localhost:7120")
                                 .AllowAnyHeader()
                                 .AllowAnyMethod();
         });
@@ -200,6 +200,87 @@ app.MapPost("/api/OrderStatus", (int OrderId, int OrderStatusId, HHPWDbContext d
     }
 
     order.Status.Add(statusToAdd);
+    db.SaveChanges();
+
+    return Results.NoContent();
+});
+// Get all Products 
+app.MapGet("/products", (HHPWDbContext db) =>
+{
+    return db.Products.ToList();
+});
+
+// Get Product by ID
+app.MapGet("/products/{id}", (HHPWDbContext db, int id) =>
+{
+    var product = db.Products.Find(id);
+    if (product == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    return Results.Ok(product);
+});
+
+// Adding a Product
+app.MapPost("/products", (HHPWDbContext db, Product newProduct) =>
+{
+    db.Products.Add(newProduct);
+    db.SaveChanges();
+    return Results.Created($"/products/{newProduct.Id}", newProduct);
+});
+
+// Deleting a Product
+app.MapDelete("/products/{id}", (HHPWDbContext db, int id) =>
+{
+    var product = db.Products.Find(id);
+    if (product == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    db.Products.Remove(product);
+    db.SaveChanges();
+
+    return Results.NoContent();
+});
+
+// Updating a Product
+app.MapPut("/products/{id}", (HHPWDbContext db, int id, Product updatedProduct) =>
+{
+    var product = db.Products.Find(id);
+    if (product == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    product.Name = updatedProduct.Name;
+    product.Price = updatedProduct.Price;
+    product.Description =  updatedProduct.Description;
+
+    db.Products.Update(product);
+    db.SaveChanges();
+
+    return Results.Ok(product);
+});
+//Adding Product to an Order
+app.MapPost("/api/ProductOrders", (int ProductId, int OrderId, HHPWDbContext db) =>
+{
+    var product = db.Products.Include(p => p.Orders).FirstOrDefault(p => p.Id == ProductId);
+
+    if (product == null)
+    {
+        return Results.NotFound();
+    }
+
+    var orderToAdd = db.Orders.FirstOrDefault(o => o.Id == OrderId);
+
+    if (orderToAdd == null)
+    {
+        return Results.NotFound();
+    }
+
+    product.Orders.Add(orderToAdd);
     db.SaveChanges();
 
     return Results.NoContent();
