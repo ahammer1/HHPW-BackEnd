@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using HHPW_BackEnd;
 using HHPW_BackEnd.Models;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -155,6 +156,56 @@ app.MapPut("/orders/{id}", (HHPWDbContext db, int id, Orders updatedOrder) =>
 
     return Results.Ok(order);
 });
+//Get All Order Status
+app.MapGet("/orderstatus", (HHPWDbContext db) =>
+{
+    return db.Status.ToList();
+});
+// Adding an order Status
+app.MapPost("/orderstatus", (HHPWDbContext db, OrderStatus newStatus) =>
+{
+    db.Status.Add(newStatus);
+    db.SaveChanges();
+    return Results.Created($"/orderstatus/{newStatus.Id}", newStatus);
+});
+//Deleting an Order Status
+app.MapDelete("/orderstatus/{id}", (HHPWDbContext db, int id) =>
+{
+    var status = db.Status.Find(id);
+    if (status == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    db.Status.Remove(status);
+    db.SaveChanges();
+
+    return Results.NoContent();
+});
+//adding a status to an order
+app.MapPost("/api/OrderStatus", (int OrderId, int OrderStatusId, HHPWDbContext db) =>
+{
+    var order = db.Orders.Include(o => o.Status).FirstOrDefault(o => o.Id == OrderId);
+
+    if (order == null)
+    {
+        return Results.NotFound();
+    }
+
+    var statusToAdd = db.Status.FirstOrDefault(s => s.Id == OrderStatusId);
+
+    if (statusToAdd == null)
+    {
+        return Results.NotFound();
+    }
+
+    order.Status.Add(statusToAdd);
+    db.SaveChanges();
+
+    return Results.NoContent();
+});
+
+
 
 
 app.Run();
