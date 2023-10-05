@@ -85,7 +85,7 @@ app.MapDelete("/employees/{id}", (HHPWDbContext db, int id) =>
     db.SaveChanges();
     return Results.Ok();
 });
-
+//Update an Employee
 app.MapPut("/employees/{id}", (HHPWDbContext db, int id, Employee updatedEmployee) =>
 {
     var employee = db.Employee.Find(id);
@@ -100,6 +100,60 @@ app.MapPut("/employees/{id}", (HHPWDbContext db, int id, Employee updatedEmploye
     db.SaveChanges();
 
     return Results.Ok();
+});
+//Get All Orders
+app.MapGet("/orders", (HHPWDbContext db) =>
+{
+    return db.Orders.ToList();
+});
+//Get Order by ID
+app.MapGet("/orders/{id}", (HHPWDbContext db, int id) =>
+{
+    var order = db.Orders.Find(id);
+    if (order == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    return Results.Ok(order);
+});
+//Adding an Order
+app.MapPost("/orders", (HHPWDbContext db, Orders newOrder) =>
+{
+    db.Orders.Add(newOrder);
+    db.SaveChanges();
+    return Results.Created($"/orders/{newOrder.Id}", newOrder);
+});
+//Deleting an Order
+app.MapDelete("/orders/{id}", (HHPWDbContext db, int id) =>
+{
+    var order = db.Orders.Find(id);
+    if (order == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    db.Orders.Remove(order);
+    db.SaveChanges();
+
+    return Results.NoContent();
+});
+//Updating an Order
+app.MapPut("/orders/{id}", (HHPWDbContext db, int id, Orders updatedOrder) =>
+{
+    var order = db.Orders.Find(id);
+    if (order == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    order.Name = updatedOrder.Name;
+    order.Status = updatedOrder.Status;
+
+    db.Orders.Update(order);
+    db.SaveChanges();
+
+    return Results.Ok(order);
 });
 
 
