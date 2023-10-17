@@ -263,28 +263,73 @@ app.MapPut("/products/{id}", (HHPWDbContext db, int id, Product updatedProduct) 
 
     return Results.Ok(product);
 });
+
 //Adding Product to an Order
-app.MapPost("/api/ProductOrders", (int ProductId, int OrderId, HHPWDbContext db) =>
+app.MapPost("/ProductOrders/{ProductId}/{OrderId}", (int ProductId, int OrderId, HHPWDbContext db) =>
+
 {
-    var product = db.Products.Include(p => p.Orders).FirstOrDefault(p => p.Id == ProductId);
-
-    if (product == null)
-    {
-        return Results.NotFound();
-    }
-
     var orderToAdd = db.Orders.FirstOrDefault(o => o.Id == OrderId);
+    var productToAdd = db.Products.FirstOrDefault(p => p.Id == ProductId);
 
     if (orderToAdd == null)
     {
         return Results.NotFound();
     }
 
-    product.Orders.Add(orderToAdd);
+    if (orderToAdd.Products == null)
+    {
+        orderToAdd.Products = new List<Product>();
+    }
+
+    orderToAdd.Products.Add(productToAdd);
     db.SaveChanges();
 
-    return Results.NoContent();
+    return Results.Created($"orders/{orderToAdd.Id}", orderToAdd);
 });
+// delete product from an order
+app.MapDelete("/ProductOrders/{ProductId}/{OrderId}", (int ProductId, int OrderId, HHPWDbContext db) =>
+{
+    var order = db.Orders
+        .Include(o => o.Products) // Ensure that the Products are included in the query
+        .FirstOrDefault(o => o.Id == OrderId);
+
+    if (order == null)
+    {
+        return Results.NotFound();
+    }
+
+    var product = order.Products.FirstOrDefault(p => p.Id == ProductId);
+
+    if (product == null)
+    {
+        return Results.NotFound(); // Product not found in the order.
+    }
+
+    order.Products.Remove(product);
+    db.SaveChanges();
+
+    return Results.NoContent(); // Product successfully removed from the order.
+});
+
+// Get an order's products
+app.MapGet("/ordersProducts/{orderId}", (HHPWDbContext db, int orderId) =>
+{
+    var orderProducts = db.Orders
+        .Where(x => x.Id == orderId)
+        .Include(x => x.Products)
+        .FirstOrDefault();
+
+    if (orderProducts != null)
+    {
+        var items = orderProducts.Products.ToList();
+        return Results.Ok(items);
+    }
+    else
+    {
+        return Results.NotFound();
+    }
+});
+
 
 // Get all Payments
 app.MapGet("/payments", (HHPWDbContext db) =>
@@ -300,6 +345,28 @@ app.MapPost("/payments", (HHPWDbContext db, PaymentType newPaymentType) =>
     return Results.Created($"/paymenttype/{newPaymentType.Id}", newPaymentType);
 });
 
+app.MapPost("/OrderPaymentTypes/{OrderId}/{PaymentTypeId}", (int OrderId, int PaymentTypeId, HHPWDbContext db) =>
+{
+    var orderToAdd = db.Orders.FirstOrDefault(o => o.Id == OrderId);
+    var paymentTypeToAdd = db.PaymentType.FirstOrDefault(pt => pt.Id == PaymentTypeId);
+
+    if (orderToAdd == null || paymentTypeToAdd == null)
+    {
+        return Results.NotFound();
+    }
+
+    if (orderToAdd.PaymentTypes == null)
+    {
+        orderToAdd.PaymentTypes = new List<PaymentType>();
+    }
+
+    orderToAdd.PaymentTypes.Add(paymentTypeToAdd);
+    db.SaveChanges();
+
+    return Results.Created($"orders/{orderToAdd.Id}", orderToAdd);
+});
+
+
 // Deleting a Payment
 app.MapDelete("/payments/{id}", (HHPWDbContext db, int id) =>
 {
@@ -314,7 +381,5 @@ app.MapDelete("/payments/{id}", (HHPWDbContext db, int id) =>
 
     return Results.NoContent();
 });
-
-
 
 app.Run();

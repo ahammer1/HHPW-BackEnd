@@ -13,6 +13,8 @@ namespace HHPW_BackEnd
 
         public DbSet<Employee> Employee { get; set; }
 
+        public DbSet<OrderProducts> OrderProducts { get; set; }
+
         public HHPWDbContext(DbContextOptions<HHPWDbContext> context) : base(context)
         {
 

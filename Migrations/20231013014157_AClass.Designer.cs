@@ -3,6 +3,7 @@ using System;
 using HHPW_BackEnd;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HHPW_BackEnd.Migrations
 {
     [DbContext(typeof(HHPWDbContext))]
-    partial class HHPWDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231013014157_AClass")]
+    partial class AClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -163,21 +166,6 @@ namespace HHPW_BackEnd.Migrations
                     b.ToTable("OrderStatusOrders");
                 });
 
-            modelBuilder.Entity("OrdersPaymentType", b =>
-                {
-                    b.Property<int>("OrdersId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PaymentTypesId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("OrdersId", "PaymentTypesId");
-
-                    b.HasIndex("PaymentTypesId");
-
-                    b.ToTable("OrdersPaymentType");
-                });
-
             modelBuilder.Entity("OrdersProduct", b =>
                 {
                     b.Property<int>("OrdersId")
@@ -215,21 +203,6 @@ namespace HHPW_BackEnd.Migrations
                     b.HasOne("HHPW_BackEnd.Models.OrderStatus", null)
                         .WithMany()
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("OrdersPaymentType", b =>
-                {
-                    b.HasOne("HHPW_BackEnd.Models.Orders", null)
-                        .WithMany()
-                        .HasForeignKey("OrdersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HHPW_BackEnd.Models.PaymentType", null)
-                        .WithMany()
-                        .HasForeignKey("PaymentTypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
