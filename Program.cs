@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using HHPW_BackEnd;
 using HHPW_BackEnd.Models;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +34,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 builder.Services.AddNpgsql<HHPWDbContext>(builder.Configuration["HHPWDbConnectionString"]);
 
 // Set the JSON serializer options
-builder.Services.Configure<JsonOptions>(options =>
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
 {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
@@ -140,7 +141,7 @@ app.MapDelete("/orders/{id}", (HHPWDbContext db, int id) =>
     return Results.NoContent();
 });
 //Updating an Order
-app.MapPut("/orders/{id}", (HHPWDbContext db, int id, Orders updatedOrder) =>
+app.MapPut("/orders/{id}", (HHPWDbContext db, int id, Orders updatedOrder ) =>
 {
     var order = db.Orders.Find(id);
     if (order == null)
@@ -151,11 +152,34 @@ app.MapPut("/orders/{id}", (HHPWDbContext db, int id, Orders updatedOrder) =>
     order.Name = updatedOrder.Name;
     order.Status = updatedOrder.Status;
 
+
     db.Orders.Update(order);
     db.SaveChanges();
 
     return Results.Ok(order);
 });
+app.MapPut("/orders/{id}/close", (HHPWDbContext db, int id, Orders closedOrder) =>
+{
+    var order = db.Orders.Find(id);
+    if (order == null)
+    {
+        return Results.NotFound(id);
+    }
+
+    int closedStatusId = 2;
+    order.StatusId = closedStatusId;
+    
+    order.PaymentTypesId = closedOrder.PaymentTypesId;
+    order.Tip = closedOrder.Tip;
+    order.Review = closedOrder.Review;
+
+
+    db.Orders.Update(order);
+    db.SaveChanges();
+
+    return Results.Ok(order);
+});
+
 //Get All Order Status
 app.MapGet("/orderstatus", (HHPWDbContext db) =>
 {
@@ -183,7 +207,7 @@ app.MapDelete("/orderstatus/{id}", (HHPWDbContext db, int id) =>
     return Results.NoContent();
 });
 //adding a status to an order
-app.MapPost("/api/OrderStatus", (int OrderId, int OrderStatusId, HHPWDbContext db) =>
+app.MapPost("/api/OrderStatus/{OrderId}", (int OrderId, int OrderStatusId, HHPWDbContext db) =>
 {
     var order = db.Orders.Include(o => o.Status).FirstOrDefault(o => o.Id == OrderId);
 
@@ -330,7 +354,6 @@ app.MapGet("/ordersProducts/{orderId}", (HHPWDbContext db, int orderId) =>
     }
 });
 
-
 // Get all Payments
 app.MapGet("/payments", (HHPWDbContext db) =>
 {
@@ -364,6 +387,24 @@ app.MapPost("/OrderPaymentTypes/{OrderId}/{PaymentTypeId}", (int OrderId, int Pa
     db.SaveChanges();
 
     return Results.Created($"orders/{orderToAdd.Id}", orderToAdd);
+});
+
+app.MapGet("/orderPayments/{orderId}", (HHPWDbContext db, int orderId) =>
+{
+    var order = db.Orders
+        .Where(x => x.Id == orderId)
+        .Include(x => x.PaymentTypes) // Include the OrderPayments navigation property
+        .FirstOrDefault();
+
+    if (order != null)
+    {
+        var orderPayments = order.PaymentTypes.ToList();
+        return Results.Ok(orderPayments);
+    }
+    else
+    {
+        return Results.NotFound();
+    }
 });
 
 
