@@ -122,6 +122,7 @@ app.MapGet("/orders/{id}", (HHPWDbContext db, int id) =>
 //Adding an Order
 app.MapPost("/orders", (HHPWDbContext db, Orders newOrder) =>
 {
+
     db.Orders.Add(newOrder);
     db.SaveChanges();
     return Results.Created($"/orders/{newOrder.Id}", newOrder);
@@ -168,17 +169,34 @@ app.MapPut("/orders/{id}/close", (HHPWDbContext db, int id, Orders closedOrder) 
 
     int closedStatusId = 2;
     order.StatusId = closedStatusId;
-    
-    order.PaymentTypesId = closedOrder.PaymentTypesId;
-    order.Tip = closedOrder.Tip;
-    order.Review = closedOrder.Review;
 
+    if (closedOrder.PaymentTypesId != null)
+    {
+        order.PaymentTypesId = closedOrder.PaymentTypesId;
+    }
 
-    db.Orders.Update(order);
-    db.SaveChanges();
+    if (closedOrder.Tip != null)
+    {
+        order.Tip = closedOrder.Tip;
+    }
 
-    return Results.Ok(order);
+    if (closedOrder.Review != null)
+    {
+        order.Review = closedOrder.Review;
+    }
+
+    try
+    {
+        db.Orders.Update(order);
+        db.SaveChanges();
+        return Results.Ok(order);
+    }
+    catch (DbUpdateException)
+    {
+        return Results.NoContent();
+    }
 });
+
 
 //Get All Order Status
 app.MapGet("/orderstatus", (HHPWDbContext db) =>
